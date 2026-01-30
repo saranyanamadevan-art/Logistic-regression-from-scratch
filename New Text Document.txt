@@ -1,0 +1,63 @@
+import numpy as np
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+# Load dataset
+data = load_breast_cancer()
+X = data.data
+y = data.target.reshape(-1, 1)
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# Feature scaling
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+class LogisticRegressionScratch:
+    def __init__(self, learning_rate=0.01, epochs=2000):
+        self.learning_rate = learning_rate
+        self.epochs = epochs   
+
+    def sigmoid(self, z):
+        return 1 / (1 + np.exp(-z))
+
+    def loss(self, y, y_hat):
+        return -np.mean(
+            y * np.log(y_hat + 1e-9) +
+            (1 - y) * np.log(1 - y_hat + 1e-9)
+        )
+
+    def fit(self, X, y):
+        m, n = X.shape
+        self.W = np.zeros((n, 1))
+        self.b = 0
+        self.losses = []
+
+        for _ in range(self.epochs):  
+            z = np.dot(X, self.W) + self.b
+            y_hat = self.sigmoid(z)
+
+            self.losses.append(self.loss(y, y_hat))
+
+            dw = (1 / m) * np.dot(X.T, (y_hat - y))
+            db = (1 / m) * np.sum(y_hat - y)
+
+            self.W -= self.learning_rate * dw
+            self.b -= self.learning_rate * db
+
+    def predict(self, X):
+        z = np.dot(X, self.W) + self.b
+        return (self.sigmoid(z) >= 0.5).astype(int)
+model = LogisticRegressionScratch(learning_rate=0.01, epochs=2000)
+model.fit(X_train, y_train)
+y_pred_scratch = model.predict(X_test)
+
+from sklearn.metrics import accuracy_score
+scratch_accuracy = accuracy_score(y_test, y_pred_scratch)
+
+print("Accuracy (From Scratch):", scratch_accuracy)
